@@ -1,0 +1,41 @@
+
+name: Build Experience Enchantment
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - ".github/workflows/build.yml"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Unpack source
+        run: |
+          unzip -o ExperienceEnchantment-Forge-1.12.2-source-updated.zip -d source
+          find source -maxdepth 3 -type f | head -100
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+
+      - name: Build
+        run: |
+          cd source
+          find . -name gradlew -type f -exec chmod +x {} \;
+          if [ -f gradlew ]; then ./gradlew build --no-daemon; else echo "Gradle wrapper not found"; exit 1; fi
+
+      - name: Upload build output
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: experience-enchantment-build
+          path: source/**/build/libs/*.jar
+          if-no-files-found: warn
+          
